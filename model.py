@@ -153,7 +153,6 @@ def calculate_return_profit(pred_df):
     count_df.columns = ["date", "deal_times"]
 
     pred_df = mean_df.merge(open_df, on=["date"]).merge(count_df, on=["date"])
-    pred_df["total_profit"] = (pred_df["profit"].cumsum()).round(2)
     pred_df["date"] = pd.to_datetime(pred_df["date"])
     pred_df["year"] = pred_df["date"].dt.year
     pred_df["fee"] = pred_df["open"] * 0.001425 * 2 * 0.5
@@ -164,6 +163,7 @@ def calculate_return_profit(pred_df):
     pred_df["total_profit_fee_tax"] = (
         pred_df["profit_fee_tax"].cumsum()
     ).round(2)
+    pred_df["total_profit"] = (pred_df["profit_fee_tax"].cumsum()).round(2)
     return pred_df
 
 
@@ -190,6 +190,7 @@ def show_profit(profit_df, text: str):
     ---------------------------------------------------------------------------
     平均資金: {round(profit_df["open"].mean(),2)*1000}
     平均每天交易資金: {round(profit_df['open'].mean() ,2)*1000}
+    最大交易資金: {round(profit_df['open'].max() ,2)*1000}
     平均每天交易次數: {round(profit_df['deal_times'].mean() ,2)}
     最大每天交易次數: {round(profit_df['deal_times'].max() ,2)}
     最小每天交易次數: {round(profit_df['deal_times'].min() ,2)}
@@ -222,5 +223,4 @@ def main():
     show_profit(train_profit_df, "train")
     show_profit(test_profit_df, "test")
 
-
-
+    test_profit_df.to_csv('test_profit_df.csv', index=False)
