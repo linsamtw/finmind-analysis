@@ -164,6 +164,14 @@ def calculate_return_profit(pred_df):
         pred_df["profit_fee_tax"].cumsum()
     ).round(2)
     pred_df["total_profit"] = (pred_df["profit_fee_tax"].cumsum()).round(2)
+    for col in [
+        "fee",
+        "tax",
+        "profit_fee_tax",
+        "total_profit_fee_tax",
+        "total_profit",
+    ]:
+        pred_df[col] = pred_df[col].round(2)
     return pred_df
 
 
@@ -183,7 +191,17 @@ def show_profit(profit_df, text: str):
     train_win_rate_with_fee_tax = round(
         create_win_rate(profit_df, "profit_fee_tax"), 2
     )
-    deal_money = round(profit_df["open"].mean(), 2) * 1000
+    profit_df["return"] = [
+        0 if x > 0 else x for x in list(profit_df["profit_fee_tax"])
+    ]
+    max_return = 0
+    max_ret = 0
+    for ret in list(profit_df["return"]):
+        if ret == 0:
+            max_ret = 0
+        max_ret += ret
+        if max_ret < max_return:
+            max_return = max_ret
     logger.info(
         f"""
     {text}
@@ -196,13 +214,13 @@ def show_profit(profit_df, text: str):
     最小每天交易次數: {round(profit_df['deal_times'].min() ,2)}
     ---------------------------------------------------------------------------
     平均報酬: {round(profit_df["profit"].mean(),2)*1000}
-    最大損失: {round(profit_df["total_profit"].min(),2)*1000}
     平均年報酬: {profit_df.groupby('year')['profit'].sum().mean().round(2)*1000}
     勝率: {train_win_rate}%
     ---------------------------------------------------------------------------
     含手續費 0.001425、交易稅 0.003*0.5
     平均報酬: {round(profit_df["profit_fee_tax"].mean(),2)*1000}
-    最大損失: {round(profit_df["total_profit_fee_tax"].min(),2)*1000}
+    最大單次損失: {round(profit_df["profit_fee_tax"].min(),2)*1000}
+    最大累積損失: {round(max_return,2)*1000}
     平均年報酬: {profit_df.groupby('year')['profit_fee_tax'].sum().mean().round(2)*1000}
     勝率: {train_win_rate_with_fee_tax}%
     """
